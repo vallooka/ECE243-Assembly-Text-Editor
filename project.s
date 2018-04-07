@@ -1,4 +1,7 @@
 # TODO: add vertical cursor movement
+# TODO: add line numbers
+# TODO: add support for selections
+# TODO: char bg color subroutine 
 
 .equ WIDTH, 320
 .equ HEIGHT, 240
@@ -174,7 +177,7 @@ FillSpaces:
     ldw ra, 12(sp)
 	ldw r18, 8(sp)
     ldw r17, 4(sp)
-    ldw r16, 0(sp)    
+    ldw r16, 0(sp)
     addi sp, sp, 16
     ret
 
@@ -348,26 +351,83 @@ move_cursor_right:
 	ret
 
 move_cursor_up:
-	ret
-	# find which column cursor is on
+	subi sp, sp, 16
+	stw r8, 0(sp)
+	stw r9, 4(sp)
+	stw r10, 8(sp)
+	stw r10, 12(sp)
+
+	# check if cursor is at beginning of array
 	movia r8, cursor_ptr
+	ldw r8, 0(r8)
+	movia r11, CHAR_ARRAY_BASE
+	ldw r11, 0(r11)
+	beq r8, r11, MCU_EXIT
+
 	# r9 := column
 	movi r9, 0
 
+	# the following ensures that: columns start at 0, cursor at newline isn't on column 0
+	addi r8, r8, 1
+
+	# count which column the cursor is on
 	MCU_COUNT_COLUMNS:
-	ldbu r10, 0(r8)
-	movui r11, 10
-	beq r10, r11, MCU_COUNT_DONE # hit newline
 	movia r11, CHAR_ARRAY_BASE  
-	beq r10, r11, MCU_COUNT_DONE # hit beginning of array
+	beq r8, r11, MCU_EXIT # hit beginning of array, can't move up
+	ldbu r10, 0(r8)
+	movui r11, '\n'
+	beq r10, r11, MCU_COUNT_COLUMNS_DONE # hit newline
 
 	addi r9, r9, 1 # increment column
-	addi r8, r8, 1 # move iterator backwards
+	addi r8, r8, 1 # move cursor left
 	br MCU_COUNT_COLUMNS
+	MCU_COUNT_COLUMNS_DONE:
 
-	MCU_COUNT_DONE:
+	# continuing from previous loop, the cursor is now at the end of the previous line.
+	addi r8, r8, 1
+
+	# move cursor to the beginning of the line
+	MCU_TO_PREV_LINE_START:
+	# check for beginning of array
+	movia r10, CHAR_ARRAY_BASE
+	beq r8, r10, MCU_NEXT_LINE_DONE
+	# check for newline
+	ldb r10, 0(r8)
+	movui r11, '\n'
+	beq r10, r11, MCU_NEXT_LINE_DONE_NEWLINE
+	# move cursor left
+	addi r8, r8, 1
+	br MCU_TO_PREV_LINE_START
+	
+	MCU_NEXT_LINE_DONE_NEWLINE:
+	# move cursor after newline
+	subi r8, r8, 1
+	MCU_NEXT_LINE_DONE:
+
+	# move cursor to the same column as the previous, or up to newline
+	MCU_TO_COLUMN:
+	# check if at correct position
+	beq r9, r0, MCU_SAVE_CURSOR
+	# check for newline
+	ldb r10, 0(r8)
+	movui r11, '\n'
+	beq r10, r11, MCU_SAVE_CURSOR
+	# move cursor right
+	subi r8, r8, 1
+	subi r9, r9, 1
+	br MCU_TO_COLUMN
+
+	MCU_SAVE_CURSOR:
+	movia r9, cursor_ptr
+	stw r8, 0(r9)
+
+	MCU_EXIT:
+	ldw r8, 0(sp)
+	ldw r9, 4(sp)
+	ldw r10, 8(sp)
+	ldw r10, 12(sp)
+	addi sp, sp, 16
 	ret
-
 
 move_cursor_down:
 	ret
