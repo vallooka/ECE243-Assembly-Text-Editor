@@ -1,4 +1,3 @@
-# TODO: add vertical cursor movement
 # TODO: add line numbers
 # TODO: add support for selections
 # TODO: char bg color subroutine 
@@ -63,7 +62,7 @@ _start:
 
 Loop:
 	# Fill screen with black, clear text by drawing over with spaces
-	movia r4, 0x00000000
+	movia r4, 0x0146
     call FillColour		
     call FillSpaces		
     
@@ -73,7 +72,6 @@ Loop:
 	movia r16, CHAR_ARRAY_BASE
 	movi r4, 0
 	movi r5, 0
-	
 
 	DRAWING_TEXT:
 	# bool := should draw printable ascii char
@@ -83,15 +81,17 @@ Loop:
 	movia r17, cursor_ptr
 	ldw r17, 0(r17)
 	bne r16, r17, READ_CHAR
+
 	movia r17, cursor_blink
 	ldbu r17, 0(r17)
 	beq r17, r0, READ_CHAR
-	movui r6, '_'  # would've preferred block character but vga doesn't support extended ascii codes
-	call WriteChar
+
+	movia r6, 0xffff
+	call FillCharBG
 	# increment x
 	addi r4, r4, 1
 	# don't print ascii character over cursor
-	movi r18, 0
+	movi r18, 1
 
 	READ_CHAR:
 	# check if zero terminator
@@ -151,6 +151,61 @@ FillColour:
     ldw r17, 4(sp)
     ldw r16, 0(sp)    
     addi sp, sp, 16
+    ret
+
+# r4: x
+# r5: y
+# r6: colour
+FillCharBG:
+	subi sp, sp, 44
+    stw r16, 0(sp)		# Save some registers
+    stw r17, 4(sp)
+    stw r18, 8(sp)
+    stw r19, 12(sp)
+    stw r20, 16(sp)
+    stw r21, 20(sp)
+    stw r22, 24(sp)
+	stw r4, 28(sp)
+	stw r5, 32(sp)
+	stw r6, 36(sp)
+    stw ra, 40(sp)
+    
+	# colour
+    mov r18, r6
+	# calculate rect bounds
+	mov r19, r4
+	mov r20, r5
+	# min: multiply x,y by 8
+	muli r19, r19, 4
+	muli r20, r20, 4
+	# max: add width/height (8 - 1)
+	addi r21, r19, 3
+	addi r22, r20, 3
+    
+    # Two loops to draw each pixel
+    mov r16, r21
+    1:	mov r17, r22
+        2:  mov r4, r16
+            mov r5, r17
+            mov r6, r18
+            call WritePixel		# Draw one pixel
+            subi r17, r17, 1
+            bge r17, r20, 2b
+        subi r16, r16, 1
+        bge r16, r19, 1b
+    
+    ldw r16, 0(sp)		# Save some registers
+    ldw r17, 4(sp)
+    ldw r18, 8(sp)
+    ldw r19, 12(sp)
+    ldw r20, 16(sp)
+    ldw r21, 20(sp)
+    ldw r22, 24(sp)
+	ldw r4, 28(sp)
+	ldw r5, 32(sp)
+	ldw r6, 36(sp)
+    ldw ra, 40(sp)
+    addi sp, sp, 44
     ret
 
 FillSpaces:
@@ -364,7 +419,6 @@ move_cursor_up:
 	movia r8, cursor_ptr
 	ldw r8, 0(r8)
 	movia r11, CHAR_ARRAY_BASE
-	ldw r11, 0(r11)
 	beq r8, r11, MCU_EXIT
 
 	# r9 := column
@@ -449,7 +503,6 @@ move_cursor_down:
 	movia r8, cursor_ptr
 	ldw r8, 0(r8)
 	movia r11, CHAR_ARRAY_BASE
-	ldw r11, 0(r11)
 	beq r8, r11, MCD_COUNT_COLUMNS_DONE
 
 	# the following ensures that: columns start at 0, cursor at newline isn't on column 0
