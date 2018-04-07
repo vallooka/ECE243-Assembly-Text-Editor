@@ -1,6 +1,5 @@
 # TODO: add line numbers
 # TODO: add support for selections
-# TODO: char bg color subroutine 
 
 .equ WIDTH, 320
 .equ HEIGHT, 240
@@ -52,9 +51,9 @@ _start:
     stwio r9, 4(r8)
 	# set period to 1 second on timer
 	movia r8, TIMER_BASE
-	movui r9, 0xe100   # upper half
+	movui r9, 0xe100   # lower half
 	ldwio r9, 8(r8)
-	movui r9, 0x5f5    # lower half
+	movui r9, 0x05f5    # upper half
 	ldwio r9, 12(r8)
 	# enable timeout interrupts and start timer
 	movui r9, 7
@@ -65,12 +64,13 @@ Loop:
 	movia r4, 0x0146
     call FillColour		
     call FillSpaces		
+    call FillSidebar		
     
 	# Draw contents of char array to the screen
 	# (r4, r5) := (x, y)
 	# r16 := char array iterator
 	movia r16, CHAR_ARRAY_BASE
-	movi r4, 0
+	movi r4, 3
 	movi r5, 0
 
 	DRAWING_TEXT:
@@ -88,8 +88,6 @@ Loop:
 
 	movia r6, 0xffff
 	call FillCharBG
-	# increment x
-	addi r4, r4, 1
 	# don't print ascii character over cursor
 	movi r18, 1
 
@@ -101,7 +99,7 @@ Loop:
 	# check if newline
 	movui r17, '\n'
 	bne r6, r17, PRINTABLE_CHAR
-	mov r4, r0     # carriage return
+	movi r4, 3     # carriage return
 	addi r5, r5, 1 # line feed
 	br CHAR_DONE
 
@@ -274,6 +272,47 @@ WritePixel:
 	sthio r6, 0(r5)		# Write 16-bit pixel
 	ret
 
+FillSidebar:
+	subi sp, sp, 16
+    stw r16, 0(sp)		# Save some registers
+    stw r17, 4(sp)
+    stw r18, 8(sp)
+    stw ra, 12(sp)
+
+    movi r16, 2
+    1:	movi r17, 59
+        2:  mov r4, r16
+            mov r5, r17
+            movi r6, 0x01A8     # sidebar colour
+            call FillCharBG		
+            subi r17, r17, 1
+            bge r17, r0, 2b
+        subi r16, r16, 1
+        bge r16, r0, 1b
+
+    ldw r16, 0(sp)		# Save some registers
+    ldw r17, 4(sp)
+    ldw r18, 8(sp)
+    ldw ra, 12(sp)
+	addi sp, sp, 16
+	ret
+
+# r4: number
+# r5: column
+DrawNumber:
+	subi sp, sp, 16
+    stw r16, 0(sp)		# Save some registers
+    stw r17, 4(sp)
+    stw r18, 8(sp)
+    stw ra, 12(sp)
+
+
+    ldw r16, 0(sp)		# Save some registers
+    ldw r17, 4(sp)
+    ldw r18, 8(sp)
+    ldw ra, 12(sp)
+	addi sp, sp, 16
+	ret
 
 ###################################
 ## TEXT MANIPULATION SUBROUTINES ##
