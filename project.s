@@ -350,12 +350,15 @@ move_cursor_right:
 	addi sp, sp, 8
 	ret
 
+# first step: count number of columns while moving cursor left to the start of the current line
+# second step: go to start of the previous line
+# third step: go the specified number of columns to the right
 move_cursor_up:
 	subi sp, sp, 16
 	stw r8, 0(sp)
 	stw r9, 4(sp)
 	stw r10, 8(sp)
-	stw r10, 12(sp)
+	stw r11, 12(sp)
 
 	# check if cursor is at beginning of array
 	movia r8, cursor_ptr
@@ -425,11 +428,93 @@ move_cursor_up:
 	ldw r8, 0(sp)
 	ldw r9, 4(sp)
 	ldw r10, 8(sp)
-	ldw r10, 12(sp)
+	ldw r11, 12(sp)
 	addi sp, sp, 16
 	ret
 
+# first step: count number of columns
+# second step: move cursor to the start of the next line
+# third step: go the specified number of columns to the right
 move_cursor_down:
+	subi sp, sp, 16
+	stw r8, 0(sp)
+	stw r9, 4(sp)
+	stw r10, 8(sp)
+	stw r11, 12(sp)
+
+	# r9 := column
+	movi r9, 0
+
+	# check if cursor is at beginning of array, otherwise upcoming loop fails
+	movia r8, cursor_ptr
+	ldw r8, 0(r8)
+	movia r11, CHAR_ARRAY_BASE
+	ldw r11, 0(r11)
+	beq r8, r11, MCD_COUNT_COLUMNS_DONE
+
+	# the following ensures that: columns start at 0, cursor at newline isn't on column 0
+	addi r8, r8, 1
+
+	# count which column the cursor is on
+	MCD_COUNT_COLUMNS:
+	movia r11, CHAR_ARRAY_BASE  
+	beq r8, r11, MCD_COUNT_COLUMNS_DONE_ARRAY_START # hit beginning of array
+	ldbu r10, 0(r8)
+	movui r11, '\n'
+	beq r10, r11, MCD_COUNT_COLUMNS_DONE # hit newline
+
+	addi r9, r9, 1 # increment column
+	addi r8, r8, 1 # move cursor left
+	br MCD_COUNT_COLUMNS
+
+	# increment column to compensate for no newline
+	MCD_COUNT_COLUMNS_DONE_ARRAY_START:
+	addi r9, r9, 1
+
+	# move cursor to next line
+	MCD_COUNT_COLUMNS_DONE:
+	movia r8, cursor_ptr
+	ldw r8, 0(r8)
+
+	MCD_TO_NEXT_LINE:
+	# check for newline
+	ldb r10, 0(r8)
+	movui r11, '\n'
+	beq r10, r11, MCD_NEXT_LINE_DONE
+	# check for zero terminator
+	beq r10, r0, MCD_EXIT
+	# move cursor right
+	subi r8, r8, 1
+	br MCD_TO_NEXT_LINE
+	
+	MCD_NEXT_LINE_DONE:
+	# move cursor past newline
+	subi r8, r8, 1
+
+	# move cursor to the same column as the previous, or up to newline/zero terminator
+	MCD_TO_COLUMN:
+	# check if at correct position
+	beq r9, r0, MCD_SAVE_CURSOR
+	# check for newline or zero terminator
+	ldb r10, 0(r8)
+	movui r11, '\n'
+	beq r10, r11, MCD_SAVE_CURSOR
+	beq r10, r0, MCD_SAVE_CURSOR
+	# move cursor right
+	subi r8, r8, 1
+	subi r9, r9, 1
+	br MCD_TO_COLUMN
+
+	MCD_SAVE_CURSOR:
+	movia r9, cursor_ptr
+	stw r8, 0(r9)
+
+	MCD_EXIT:
+	ldw r8, 0(sp)
+	ldw r9, 4(sp)
+	ldw r10, 8(sp)
+	ldw r11, 12(sp)
+	addi sp, sp, 16
 	ret
 
 #######################
