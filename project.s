@@ -446,6 +446,48 @@ delete_char:
 	addi sp, sp, 8
 	ret
 
+delete_selection:
+	subi sp, sp, 16
+	stw r8, 0(sp)
+	stw r9, 4(sp)
+	stw r10, 8(sp)
+	stw ra, 12(sp)
+
+	movia r8, selection_start_ptr
+	ldw r8, 0(r8)
+	movia r9, cursor_ptr
+	ldw r9, 0(r9)
+	bgt r8, r9, DELETING_SELECTION
+	# if start comes after the cursor, swap the two places
+	movia r10, selection_start_ptr 
+	stw r9, 0(r10)
+	movia r10, cursor_ptr
+	stw r8, 0(r10)
+
+	# keep backspacing until cursor backs up to selection start
+	DELETING_SELECTION:
+	movia r8, cursor_ptr
+	ldw r8, 0(r8)
+	movia r9, selection_start_ptr
+	ldw r9, 0(r9)
+	beq r8, r9, DELETING_DONE
+	call delete_char
+	br DELETING_SELECTION
+
+	DELETING_DONE:
+	subi sp, sp, 4
+	stw ra, 0(sp)
+	call clear_selection
+	ldw ra, 0(sp)
+	addi sp, sp, 4
+
+	ldw r8, 0(sp)
+	ldw r9, 4(sp)
+	ldw r10, 8(sp)
+	ldw ra, 12(sp)
+	addi sp, sp, 16
+	ret
+
 move_cursor_left:
 	subi sp, sp, 8
 	stw r8, 0(sp)
@@ -1052,12 +1094,30 @@ interrupt_handler:
 	########################################
     
 	case_insert_char:
-    # call insert_char, pass in ascii char
+    # if there is a selection, delete selection
+	movia r8, selection_start_ptr
+	ldw r8, 0(r8)
+	beq r8, r0, call_insert_char
+	subi sp, sp, 4
+	stw ra, 0(sp)
+	call delete_selection
+	ldw ra, 0(sp)
+	addi sp, sp, 4
+
+    call_insert_char:
 	mov r4, r14
     call insert_char
     br end  
     
     caseBackspace:
+	# if there is a selection, delete the selection.
+	movia r10, selection_start_ptr
+	ldw r10, 0(r10)
+	beq r10, r0, call_delete_char
+	call delete_selection
+	br end
+
+	call_delete_char:
     call delete_char
 	br end
     
