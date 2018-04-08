@@ -1,5 +1,15 @@
+
+# feature list:
+# TODO: manipulate selections using shift + arrow keys
+# TODO: delete selection on backspace
+# TODO: replace selection with char
+# TODO: copy contents of selection to clipboard
+# TODO: paste contents of clipboard
 # TODO: add line numbers
-# TODO: add support for selections
+# (DONE): add support for selections
+# (DONE): add gutter
+# (DONE): char bg color subroutine 
+# (DONE): add vertical cursor movement
 
 .equ WIDTH, 320
 .equ HEIGHT, 240
@@ -14,7 +24,8 @@
 .equ CHAR_ARRAY_BASE, 0x03fffffc # char array to hold entire file contents
 
 .data
-cursor_ptr: .word 0x03FFFFFC # a pointer to the array element the cursor is currently on
+cursor_ptr: .word 0x03fffffc # a pointer to the array element the cursor is currently on
+selection_start_ptr: .word 0x03fffff2 
 cursor_blink: .byte 0
 
 ps2_previous_byte:
@@ -60,7 +71,7 @@ _start:
 	stwio r9, 4(r8)
 
 Loop:
-	# Fill screen with black, clear text by drawing over with spaces
+	# redraw background
 	movia r4, 0x0146
     call FillColour		
     call FillSpaces		
@@ -74,9 +85,39 @@ Loop:
 	movi r5, 0
 
 	DRAWING_TEXT:
-	# bool := should draw printable ascii char
-	movi r18, 1
+	# if selection start is zero, means there is no selection
+	movia r17, selection_start_ptr
+	ldw r17, 0(r17)
+	beq r17, r0, DRAW_CURSOR
+	
+	# draw selection between selection start and cursor
+	movia r18, cursor_ptr
+	ldw r18, 0(r18)
+	ble r17, r18, CURSOR_BEFORE_START
 
+	START_BEFORE_CURSOR:
+	movia r17, selection_start_ptr
+	ldw r17, 0(r17)
+	bgt r16, r17, DRAW_CURSOR
+	movia r17, cursor_ptr
+	ldw r17, 0(r17)
+	blt r16, r17, DRAW_CURSOR
+	br DRAW_SELECTION
+	
+	CURSOR_BEFORE_START:
+	movia r17, selection_start_ptr
+	ldw r17, 0(r17)
+	blt r16, r17, DRAW_CURSOR
+	movia r17, cursor_ptr
+	ldw r17, 0(r17)
+	bgt r16, r17, DRAW_CURSOR
+	br DRAW_SELECTION
+	
+	DRAW_SELECTION:
+	movia r6, 0x245a
+	call FillCharBG
+
+	DRAW_CURSOR:
 	# draw cursor if (iterator == cursor_ptr) && (cursor_blink)
 	movia r17, cursor_ptr
 	ldw r17, 0(r17)
@@ -86,28 +127,24 @@ Loop:
 	ldbu r17, 0(r17)
 	beq r17, r0, READ_CHAR
 
+	# draw cursor
 	movia r6, 0xffff
 	call FillCharBG
-	# don't print ascii character over cursor
-	movi r18, 1
 
 	READ_CHAR:
 	# check if zero terminator
 	ldbu r6, 0(r16)
 	beq r6, r0, DONE
 
-	# check if newline
+	NEWLINE:
 	movui r17, '\n'
 	bne r6, r17, PRINTABLE_CHAR
 	movi r4, 3     # carriage return
 	addi r5, r5, 1 # line feed
 	br CHAR_DONE
 
-	# print ascii character
 	PRINTABLE_CHAR:
-	beq r18, r0, CHAR_DONE # don't draw over cursor
 	call WriteChar
-	# increment x
 	addi r4, r4, 1
 
 	CHAR_DONE:
