@@ -1,11 +1,11 @@
 
 # feature list:
-# TODO: manipulate selections using shift + arrow keys
 # TODO: delete selection on backspace
 # TODO: replace selection with char
 # TODO: copy contents of selection to clipboard
 # TODO: paste contents of clipboard
 # TODO: add line numbers
+# (DONE): manipulate selections using shift + arrow keys
 # (DONE): add support for selections
 # (DONE): add gutter
 # (DONE): char bg color subroutine 
@@ -25,7 +25,7 @@
 
 .data
 cursor_ptr: .word 0x03fffffc # a pointer to the array element the cursor is currently on
-selection_start_ptr: .word 0x03fffff2 
+selection_start_ptr: .word 0
 cursor_blink: .byte 0
 
 ps2_previous_byte:
@@ -354,6 +354,17 @@ DrawNumber:
 ###################################
 ## TEXT MANIPULATION SUBROUTINES ##
 ###################################
+
+clear_selection:
+	subi sp, sp, 4
+	stw r8, 0(sp)
+
+	movia r8, selection_start_ptr
+	stw r0, 0(r8)
+
+	ldw r8, 0(sp)
+	addi sp, sp, 4
+	ret
 
 # insert r4 char into array at position cursor_ptr
 # shift everything after one place to the right
@@ -698,10 +709,10 @@ interrupt_handler:
 	stwio r0, 0(r8)
 	br end
 
-	KEYBOARD_INTERRUPT:
 	############################################
 	######## KEYBOARD INTERRUPT SECTION ########
 	############################################
+	KEYBOARD_INTERRUPT:
 	# ** r8 CONST REGISTER **
 	# r8 := previously read byte
     movia r10, ps2_previous_byte
@@ -730,14 +741,19 @@ interrupt_handler:
 	br extended
 
     shift:
+	cmpeqi r10, r8, 0xf0
+    bne   r10, r0, shift_released
+
+	shift_pressed:
+	# update shift held
     movia r15, shiftHeld
     movi r16, 1
     stb r16, 0(r15)
-	cmpeqi r10, r8, 0xf0
-    bne   r10, r0, shift_released
 	br end
 
 	shift_released:
+	# update shift held
+    movia r15, shiftHeld
     stb r0, 0(r15)
 	br end
     
@@ -1052,23 +1068,83 @@ interrupt_handler:
 	br end
     
 	caseUpArrow:
-	mov r4, r14
     call move_cursor_up
 	br end
 
 	caseDownArrow:
-	mov r4, r14
     call move_cursor_down
 	br end
 
 	caseLeftArrow:
-	mov r4, r14
-    call move_cursor_left
+	# if shift held
+	movia r10, shiftHeld
+	ldb r10, 0(r10)
+	beq r10, r0, caseLeftArrow_shift_released
+	# if there is no selection yet
+	movia r10, selection_start_ptr
+	ldw r10, 0(r10)
+	bne r10, r0, call_move_cursor_left
+
+	# initialize selection start
+	movia r11, cursor_ptr
+	ldw r11, 0(r11)
+	movia r10, selection_start_ptr
+	stw r11, 0(r10)
+	br call_move_cursor_left
+	
+	caseLeftArrow_shift_released:
+	# shift released, if there is a selection, move cursor to left side of selection and clear selection
+	movia r10, selection_start_ptr
+	ldw r10, 0(r10)
+	beq r10, r0, call_move_cursor_left
+	
+	movia r11, cursor_ptr
+	ldw r12, 0(r11)
+	bgt r12, r10, caseLeftArrow_call_clear_selection
+	# cursor = selection_start
+	stw r10, 0(r11)
+	caseLeftArrow_call_clear_selection:
+	call clear_selection
+	br end
+	
+	call_move_cursor_left:
+	call move_cursor_left
 	br end
 
 	caseRightArrow:
-	mov r4, r14
-    call move_cursor_right
+	# if shift held
+	movia r10, shiftHeld
+	ldb r10, 0(r10)
+	beq r10, r0, caseRightArrow_shift_released
+	# if there is no selection yet
+	movia r10, selection_start_ptr
+	ldw r10, 0(r10)
+	bne r10, r0, call_move_cursor_right
+
+	# initialize selection start
+	movia r11, cursor_ptr
+	ldw r11, 0(r11)
+	movia r10, selection_start_ptr
+	stw r11, 0(r10)
+	br call_move_cursor_right
+	
+	caseRightArrow_shift_released:
+	# shift released, if there is a selection, move cursor to right side of selection and clear selection
+	movia r10, selection_start_ptr
+	ldw r10, 0(r10)
+	beq r10, r0, call_move_cursor_right
+	
+	movia r11, cursor_ptr
+	ldw r12, 0(r11)
+	blt r12, r10, caseRightArrow_call_clear_selection
+	# cursor = selection_start
+	stw r10, 0(r11)
+	caseRightArrow_call_clear_selection:
+	call clear_selection
+	br end
+	
+	call_move_cursor_right:
+	call move_cursor_right
 	br end
 
     end:
