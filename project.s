@@ -22,8 +22,12 @@
 .equ PS2, 0xff200100
 .equ TIMER_BASE, 0xff202000
 .equ CHAR_ARRAY_BASE, 0x03fffffc # char array to hold entire file contents
+.equ PUSHBUTTONS, 0xff200050
 
 .data
+bgcolor: .word 0x0146
+sidecolor: .word 0x01A8
+
 cursor_ptr: .word 0x03fffffc # a pointer to the array element the cursor is currently on
 selection_start_ptr: .word 0
 cursor_blink: .byte 0
@@ -33,6 +37,7 @@ ps2_previous_byte: .byte 0x00
 shiftHeld: .byte 0x00
 ctrlHeld: .byte 0x00
 capscheck: .byte 0x00
+
 
 # poor man's malloc
 clipboard: 
@@ -56,8 +61,8 @@ _start:
     # enable global interrupts
     movi r8, 1
     wrctl ctl0, r8
-    # enable interrupts on IRQ 7 (PS/2), IRQ 0 (timer1)
-    movia r8, 0x81
+    # enable interrupts on IRQ 7 (PS/2), IRQ 0 (timer1), IRQ 1 (pushbuttons)
+    movia r8, 0x83
     wrctl ctl3, r8
     # enable read interrupts on PS/2 device
     movia r8, PS2
@@ -72,10 +77,15 @@ _start:
 	# enable timeout interrupts and start timer
 	movui r9, 7
 	stwio r9, 4(r8)
+	# enable interrupts on all pushbuttons
+	movia r8, PUSHBUTTONS
+	movi r9, 0xf
+	stwio r9, 8(r8)
 
 Loop:
 	# redraw background
-	movia r4, 0x0146
+	movia r4, bgcolor
+	ldw r4, 0(r4)
     call FillColour		
     call FillSpaces		
     call FillGutter		
@@ -323,7 +333,8 @@ FillGutter:
     1:	movi r17, 59
         2:  mov r4, r16
             mov r5, r17
-            movi r6, 0x01A8     # gutter colour
+			movia r6, sidecolor # sidebar / gutter colour
+			ldw r6, 0(r6)
             call FillCharBG		
             subi r17, r17, 1
             bge r17, r0, 2b
@@ -800,16 +811,89 @@ interrupt_handler:
 	# ra is saved here to reduce overhead of calling a function
     stw ra, 56(sp)
 
-	# check which device triggered interrupt
+	# check if keyboard triggered interrupt
 	movia r8, PS2
 	ldwio r8, 4(r8)
 	andi r8, r8, 0x100
 	bne r8, r0, KEYBOARD_INTERRUPT
 
+	# check if pushbutton triggered interrupt
+	movia r8, PUSHBUTTONS
+	ldwio r9, 12(r8)
+	beq r9, r0, TIMER_INTERRUPT
+
+	###########################################
+	##### PUSHBUTTON INTERRUPT SECTION ########
+	###########################################
+
+	# check which button was pressed
+	andi r10, r9, 1
+	bne r10, r0, BUTTON0
+	andi r10, r9, 2
+	bne r10, r0, BUTTON1
+	andi r10, r9, 4
+	bne r10, r0, BUTTON2
+	andi r10, r9, 8
+	bne r10, r0, BUTTON3
+
+	BUTTON0:
+	# solarized
+	movia r8, bgcolor
+	movi r9, 0x0146
+	stw r9, 0(r8)
+	movia r8, sidecolor
+	movi r9, 0x01A8
+	stw r9, 0(r8)
+	movia r8, PUSHBUTTONS
+	movia r8, PUSHBUTTONS
+	movia r10, 0xffffffff
+	stwio r10, 12(r8)
+	br end
+
+	BUTTON1:
+	# dracula
+	movia r8, bgcolor
+	movi r9, 0x2946
+	stw r9, 0(r8)
+	movia r8, sidecolor
+	movi r9, 0x422B
+	stw r9, 0(r8)
+	movia r8, PUSHBUTTONS
+	movia r10, 0xffffffff
+	stwio r10, 12(r8)
+	br end
+
+	BUTTON2:
+	# red
+	movia r8, bgcolor
+	movi r9, 0x3145
+	stw r9, 0(r8)
+	movia r8, sidecolor
+	movi r9, 0x5A28
+	stw r9, 0(r8)
+	movia r8, PUSHBUTTONS
+	movia r10, 0xffffffff
+	stwio r10, 12(r8)
+	br end
+
+	BUTTON3:
+	# magenta
+	movia r8, bgcolor
+	movi r9, 0x3146
+	stw r9, 0(r8)
+	movia r8, sidecolor
+	movi r9, 0x5A2A
+	stw r9, 0(r8)
+	movia r8, PUSHBUTTONS
+	movia r10, 0xffffffff
+	stwio r10, 12(r8)
+	br end
+
+
 	###########################################
 	######### TIMER INTERRUPT SECTION ######### 
 	###########################################
-	
+	TIMER_INTERRUPT:
 	# toggle cursor_blink
 	movia r8, cursor_blink
 	ldbu r9, 0(r8)
