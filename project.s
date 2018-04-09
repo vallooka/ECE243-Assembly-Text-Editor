@@ -32,6 +32,7 @@ ps2_previous_byte: .byte 0x00
 
 shiftHeld: .byte 0x00
 ctrlHeld: .byte 0x00
+capscheck: .byte 0x00
 
 # poor man's malloc
 clipboard: 
@@ -781,7 +782,7 @@ move_cursor_down:
 #######################
 .section .exceptions, "ax"
 interrupt_handler:
-    subi sp, sp, 56
+    subi sp, sp, 60
     stw r8, 0(sp)
     stw r9, 4(sp)
     stw r10, 8(sp)
@@ -795,8 +796,9 @@ interrupt_handler:
     stw r7, 40(sp)
     stw r15, 44(sp)
     stw r16, 48(sp)
+    stw r17, 52(sp)
 	# ra is saved here to reduce overhead of calling a function
-    stw ra, 52(sp)
+    stw ra, 56(sp)
 
 	# check which device triggered interrupt
 	movia r8, PS2
@@ -844,6 +846,18 @@ interrupt_handler:
 	
 	# update the 'previously read byte' variable with new value
 	stb r9, 0(r10)
+        
+    # capslock byte
+    movia r17, capscheck
+    
+    # check if caplock is pressed or released
+    cmpeqi r10, r9, 0x58
+    bne   r10, r0, Cap_press_release
+    
+    # check if capslock is currently pressed
+    ldb r10, 0(r17) 
+    andi r10, r10, 0x01
+    bne r10, r0, CAP
 
 	# ascii character starts at 'a' or 'A' depending on shift held
 	movui r14, 'a'
@@ -874,6 +888,22 @@ interrupt_handler:
     movia r15, shiftHeld
     stb r0, 0(r15)
 	br end
+    
+    Cap_press_release:
+    cmpeqi r10, r8, 0xf0
+    bne   r10, r0, cap_released
+    br end
+     
+    cap_released:
+    ldb r10, 0(r17) 
+    addi r10, r10, 0x01
+    stb r10, 0(r17) 
+    br end 
+     
+    CAP:
+    movui r14, 'A'
+    br shift_checked
+     
 
 	# check if ctrl was pressed/released
 	check_ctrl:
@@ -1222,6 +1252,35 @@ interrupt_handler:
     call_insert_char:
 	mov r4, r14
     call insert_char
+    
+    noisemaker:    
+    movia r6, 0xff203040	# Audio device base address: DE1-SoC
+    movi r8, 96				# Half period = 48 samples
+    movia r4, 0x60000000	# Audio sample value
+    mov r5, r8
+	movi r8, 1
+	
+    WaitForWriteSpace:
+    ldwio r10, 4(r6)
+    andhi r14, r10, 0xff00
+    beq r14, r0, WaitForWriteSpace
+    andhi r14, r10, 0xff
+    beq r14, r0, WaitForWriteSpace
+    
+	WriteTwoSamples:
+    stwio r4, 8(r6)
+    stwio r4, 12(r6)
+    subi r5, r5, 1
+    bne r5, r0, WaitForWriteSpace
+    addi r8, r8 , 1
+    movi r7, 100
+    beq r8, r7, end
+	
+    HalfPeriodInvertWaveform:
+    mov r5, r8
+    sub r4, r0, r4				# 32-bit signed samples: Negate.
+    br WaitForWriteSpace
+
     br end  
     
     caseBackspace:
@@ -1337,7 +1396,10 @@ interrupt_handler:
     ldw r7, 40(sp)
     ldw r15, 44(sp)
     ldw r16, 48(sp)
-    ldw ra, 52(sp)
-    addi sp, sp, 56
+    ldw r17, 52(sp)
+    ldw ra, 56(sp)
+    addi sp, sp, 60
     subi ea, ea, 4
     eret
+
+	
