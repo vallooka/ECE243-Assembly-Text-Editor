@@ -1,10 +1,10 @@
 
 # feature list:
-# TODO: delete selection on backspace
-# TODO: replace selection with char
-# TODO: copy contents of selection to clipboard
-# TODO: paste contents of clipboard
-# TODO: add line numbers
+# (DONE): paste contents of clipboard (10:00) ACTUAL: 10:20
+# (DONE): copy contents of selection to clipboard (9:40) ACTUAL: 10:14
+# (DONE): add ctrlHeld variable (9:25)
+# (DONE): replace selection with char
+# (DONE): delete selection on backspace
 # (DONE): manipulate selections using shift + arrow keys
 # (DONE): add support for selections
 # (DONE): add gutter
@@ -28,12 +28,14 @@ cursor_ptr: .word 0x03fffffc # a pointer to the array element the cursor is curr
 selection_start_ptr: .word 0
 cursor_blink: .byte 0
 
-ps2_previous_byte:
-.byte 0x00
+ps2_previous_byte: .byte 0x00
 
-shiftHeld:
-.byte 0x00
+shiftHeld: .byte 0x00
+ctrlHeld: .byte 0x00
 
+# poor man's malloc
+clipboard: 
+.byte 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 
 .text
 .global _start
 _start:
@@ -75,7 +77,7 @@ Loop:
 	movia r4, 0x0146
     call FillColour		
     call FillSpaces		
-    call FillSidebar		
+    call FillGutter		
     
 	# Draw contents of char array to the screen
 	# (r4, r5) := (x, y)
@@ -309,7 +311,7 @@ WritePixel:
 	sthio r6, 0(r5)		# Write 16-bit pixel
 	ret
 
-FillSidebar:
+FillGutter:
 	subi sp, sp, 16
     stw r16, 0(sp)		# Save some registers
     stw r17, 4(sp)
@@ -320,7 +322,7 @@ FillSidebar:
     1:	movi r17, 59
         2:  mov r4, r16
             mov r5, r17
-            movi r6, 0x01A8     # sidebar colour
+            movi r6, 0x01A8     # gutter colour
             call FillCharBG		
             subi r17, r17, 1
             bge r17, r0, 2b
@@ -354,6 +356,81 @@ DrawNumber:
 ###################################
 ## TEXT MANIPULATION SUBROUTINES ##
 ###################################
+
+paste:
+	subi sp, sp, 16
+	stw r8, 0(sp)
+	stw r9, 4(sp)
+	stw ra, 8(sp)
+	stw r4, 12(sp)
+
+	# insert chars from clipboard byte for byte
+	movia r8, clipboard
+	PASTING:
+	ldb r9, 0(r8)
+	beq r9, r0, DONE_PASTING
+	mov r4, r9
+	call insert_char
+	addi r8, r8, 1
+	br PASTING
+
+	DONE_PASTING:
+
+	ldw r8, 0(sp)
+	ldw r9, 4(sp)
+	ldw ra, 8(sp)
+	ldw r4, 12(sp)
+	addi sp, sp, 16
+	ret
+
+copy_to_clipboard:
+	subi sp, sp, 16
+	stw r8, 0(sp)
+	stw r9, 4(sp)
+	stw r10, 8(sp)
+	stw ra, 12(sp)
+
+	# r8: selection start
+	# r9: cursor
+	# r11: clipboard pointer
+	movia r11, clipboard
+	movia r8, selection_start_ptr
+	ldw r8, 0(r8)
+	movia r9, cursor_ptr
+	ldw r9, 0(r9)
+	bgt r8, r9, COPYING_SELECTION
+	# if start comes after the cursor, swap the two places
+	mov r10, r8
+	mov r8, r9
+	mov r9, r10
+
+	# copy bytes into clipboard from start to cursor
+	COPYING_SELECTION:
+	beq r8, r9, COPYING_DONE
+	# copy byte into clipboard
+	ldb r10, 0(r8)
+	stb r10, 0(r11)
+	# increment clipboard pointer
+	addi r11, r11, 1
+	# move start pointer one over to the right, towards cursor
+	subi r8, r8, 1
+	br COPYING_SELECTION
+
+	COPYING_DONE:
+	# copy one more byte into clipboard
+	ldb r10, 0(r8)
+	stb r10, 0(r11)
+	# add zero terminator to last position of clipboard
+	stb r0, 0(r11)
+	# clear selection
+	call clear_selection
+
+	ldw r8, 0(sp)
+	ldw r9, 4(sp)
+	ldw r10, 8(sp)
+	ldw ra, 12(sp)
+	addi sp, sp, 16
+	ret
 
 clear_selection:
 	subi sp, sp, 4
@@ -718,7 +795,6 @@ interrupt_handler:
     stw r7, 40(sp)
     stw r15, 44(sp)
     stw r16, 48(sp)
-	# NOTE: control flow must not call more than one function in this section
 	# ra is saved here to reduce overhead of calling a function
     stw ra, 52(sp)
 
@@ -779,12 +855,12 @@ interrupt_handler:
 
 	# check if shift was pressed/released
     cmpeqi r10, r9, 0x12
-    bne   r10, r0, shift
-	br extended
+    bne r10, r0, shift
+	br check_ctrl
 
     shift:
 	cmpeqi r10, r8, 0xf0
-    bne   r10, r0, shift_released
+    bne r10, r0, shift_released
 
 	shift_pressed:
 	# update shift held
@@ -798,12 +874,29 @@ interrupt_handler:
     movia r15, shiftHeld
     stb r0, 0(r15)
 	br end
-    
-    # CapsCheck:
-    # ldb r16, 0(r15)
-    # addi r16, r16, 1
-    # stb r16, 0(r15)
-    # andi r16, r16, 0x01 
+
+	# check if ctrl was pressed/released
+	check_ctrl:
+    cmpeqi r10, r9, 0x14
+    bne r10, r0, ctrl
+	br extended
+
+    ctrl:
+	cmpeqi r10, r8, 0xf0
+    bne r10, r0, ctrl_released
+
+	ctrl_pressed:
+	# update ctrl held
+    movia r15, ctrlHeld
+    movi r16, 1
+    stb r16, 0(r15)
+	br end
+
+	ctrl_released:
+	# update ctrl held
+    movia r15, ctrlHeld
+    stb r0, 0(r15)
+	br end
     
     extended:
 
@@ -816,125 +909,147 @@ interrupt_handler:
     bne r8, r13, alphabet
 
     # Up Arrow
-    cmpeqi   r10, r9, 0x75
-    bne   r10, r0, caseUpArrow
+    cmpeqi r10, r9, 0x75
+    bne r10, r0, caseUpArrow
     
     # Down Arrow
-    cmpeqi   r10, r9, 0x72
-    bne   r10, r0, caseDownArrow
+    cmpeqi r10, r9, 0x72
+    bne r10, r0, caseDownArrow
     
     # Left Arrow
-    cmpeqi   r10, r9, 0x6b
-    bne   r10, r0, caseLeftArrow
+    cmpeqi r10, r9, 0x6b
+    bne r10, r0, caseLeftArrow
     
     # Right Arrow
-    cmpeqi   r10, r9, 0x74
-    bne   r10, r0, caseRightArrow
+    cmpeqi r10, r9, 0x74
+    bne r10, r0, caseRightArrow
 	
 	alphabet:
     # A
-    cmpeqi   r10, r9, 0x1c
-    bne   r10, r0, case_insert_char 
+    cmpeqi r10, r9, 0x1c
+    bne r10, r0, case_insert_char 
     # B
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x32
-    bne   r10, r0, case_insert_char
-    # C
+    cmpeqi r10, r9, 0x32
+    bne r10, r0, case_insert_char
+    # C ################################################
+	# check if ctrl is pressed down
+	movia r10, ctrlHeld
+	ldb r10, 0(r10)
+	beq r10, r0, NORMAL_C
+	# check if C was actually pressed, otherwise continue checking other keys
+    cmpeqi r10, r9, 0x21
+    beq r10, r0, NORMAL_C
+	# copy to clipboard
+	call copy_to_clipboard
+	br end
+	NORMAL_C:
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x21
-    bne   r10, r0, case_insert_char
-    # D
+    cmpeqi r10, r9, 0x21
+    bne r10, r0, case_insert_char
+    # D ################################################
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x23
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x23
+    bne r10, r0, case_insert_char
     # E
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x24
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x24
+    bne r10, r0, case_insert_char
 	# F
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x2b
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x2b
+    bne r10, r0, case_insert_char
     # G
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x34
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x34
+    bne r10, r0, case_insert_char
     # H
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x33
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x33
+    bne r10, r0, case_insert_char
     # I
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x43
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x43
+    bne r10, r0, case_insert_char
     # J
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x3b
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x3b
+    bne r10, r0, case_insert_char
     # K
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x42
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x42
+    bne r10, r0, case_insert_char
     # L
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x4b
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x4b
+    bne r10, r0, case_insert_char
     # M
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x3a
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x3a
+    bne r10, r0, case_insert_char
     # N
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x31
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x31
+    bne r10, r0, case_insert_char
     # O
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x44
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x44
+    bne r10, r0, case_insert_char
     # P
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x4d
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x4d
+    bne r10, r0, case_insert_char
     # Q
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x15
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x15
+    bne r10, r0, case_insert_char
     # R
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x2d
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x2d
+    bne r10, r0, case_insert_char
     # S
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x1b
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x1b
+    bne r10, r0, case_insert_char
     # T
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x2c
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x2c
+    bne r10, r0, case_insert_char
     # U
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x3c
-    bne   r10, r0, case_insert_char
-    # V
+    cmpeqi r10, r9, 0x3c
+    bne r10, r0, case_insert_char
+    # V ################################################
+	# check if ctrl was held down
+	movia r10, ctrlHeld
+	ldb r10, 0(r10)
+	beq r10, r0, NORMAL_V
+	# check if V was actually pressed, otherwise continue checking other keys
+    cmpeqi r10, r9, 0x2a
+    beq r10, r0, NORMAL_V
+	# paste from clipboard
+	call paste
+	br end
+	NORMAL_V:
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x2a
-    bne   r10, r0, case_insert_char
-    # W
+    cmpeqi r10, r9, 0x2a
+    bne r10, r0, case_insert_char
+    # W ################################################
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x1d
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x1d
+    bne r10, r0, case_insert_char
     # X
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x22
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x22
+    bne r10, r0, case_insert_char
     # Y
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x35
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x35
+    bne r10, r0, case_insert_char
     # Z
     addi r14, r14, 1
-    cmpeqi   r10, r9, 0x1a
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x1a
+    bne r10, r0, case_insert_char
 
 
 	# r11 := is shift currently held down?
@@ -944,148 +1059,148 @@ interrupt_handler:
     movi r14, '0'
 	beq r11, r0, a
 	movui r14, ')'
-	a: cmpeqi   r10, r9, 0x45
-    bne   r10, r0, case_insert_char
+	a: cmpeqi r10, r9, 0x45
+    bne r10, r0, case_insert_char
     
     # 1
     movi r14, '1'
 	beq r11, r0, b
 	movui r14, '!'
-	b: cmpeqi   r10, r9, 0x16
-    bne   r10, r0, case_insert_char
+	b: cmpeqi r10, r9, 0x16
+    bne r10, r0, case_insert_char
     
     # 2
     movi r14, '2'
 	beq r11, r0, c
 	movui r14, '@'
-	c: cmpeqi   r10, r9, 0x1e
-    bne   r10, r0, case_insert_char
+	c: cmpeqi r10, r9, 0x1e
+    bne r10, r0, case_insert_char
     
     # 3
     movi r14, '3'
 	beq r11, r0, d
 	movui r14, '#'
-	d: cmpeqi   r10, r9, 0x26
-    bne   r10, r0, case_insert_char
+	d: cmpeqi r10, r9, 0x26
+    bne r10, r0, case_insert_char
     
     # 4
     movi r14, '4'
 	beq r11, r0, e
 	movui r14, '$'
-	e: cmpeqi   r10, r9, 0x25
-    bne   r10, r0, case_insert_char
+	e: cmpeqi r10, r9, 0x25
+    bne r10, r0, case_insert_char
     
     # 5
     movi r14, '5'
 	beq r11, r0, f
 	movui r14, '%'
-	f: cmpeqi   r10, r9, 0x2e
-    bne   r10, r0, case_insert_char
+	f: cmpeqi r10, r9, 0x2e
+    bne r10, r0, case_insert_char
     
     # 6
     movi r14, '6'
 	beq r11, r0, g
 	movui r14, '^'
-	g: cmpeqi   r10, r9, 0x36
-    bne   r10, r0, case_insert_char
+	g: cmpeqi r10, r9, 0x36
+    bne r10, r0, case_insert_char
     
     # 7
     movi r14, '7'
 	beq r11, r0, h
 	movui r14, '&'
 	h:
-    cmpeqi   r10, r9, 0x3d
-    bne   r10, r0, case_insert_char
+    cmpeqi r10, r9, 0x3d
+    bne r10, r0, case_insert_char
     
     # 8
     movi r14, '8'
 	beq r11, r0, i
 	movui r14, '*'
-	i: cmpeqi   r10, r9, 0x3e
-    bne   r10, r0, case_insert_char
+	i: cmpeqi r10, r9, 0x3e
+    bne r10, r0, case_insert_char
     
     # 9
     movi r14, '9'
 	beq r11, r0, j
 	movui r14, '('
-	j: cmpeqi   r10, r9, 0x46
-    bne   r10, r0, case_insert_char
+	j: cmpeqi r10, r9, 0x46
+    bne r10, r0, case_insert_char
 
     # spacebar
-    cmpeqi   r10, r9, 0x29
+    cmpeqi r10, r9, 0x29
 	movi r14, ' '
-    bne   r10, r0, case_insert_char
+    bne r10, r0, case_insert_char
 
     # backspace
-    cmpeqi   r10, r9, 0x66
-    bne   r10, r0, caseBackspace
+    cmpeqi r10, r9, 0x66
+    bne r10, r0, caseBackspace
 
     # enter
-    cmpeqi   r10, r9, 0x5a
-    bne   r10, r0, caseEnter
+    cmpeqi r10, r9, 0x5a
+    bne r10, r0, caseEnter
 
 	# comma
     movi r14, ','
 	beq r11, r0, k
 	movui r14, '<'
-	k: cmpeqi   r10, r9, 0x41
-    bne   r10, r0, case_insert_char
+	k: cmpeqi r10, r9, 0x41
+    bne r10, r0, case_insert_char
 
 	# period
     movi r14, '.'
 	beq r11, r0, l
 	movui r14, '>'
-	l: cmpeqi   r10, r9, 0x49
-    bne   r10, r0, case_insert_char
+	l: cmpeqi r10, r9, 0x49
+    bne r10, r0, case_insert_char
 
 	# f slash /
     movi r14, '/'
 	beq r11, r0, m
 	movui r14, '?'
-	m: cmpeqi   r10, r9, 0x4a
-    bne   r10, r0, case_insert_char
+	m: cmpeqi r10, r9, 0x4a
+    bne r10, r0, case_insert_char
 
 	# semicolon
     movi r14, ';'
 	beq r11, r0, n
 	movui r14, ':'
-	n: cmpeqi   r10, r9, 0x4c
-    bne   r10, r0, case_insert_char
+	n: cmpeqi r10, r9, 0x4c
+    bne r10, r0, case_insert_char
 
 	# Apostrophe
     movi r14, 39
 	beq r11, r0, o
 	movui r14, 34
-	o: cmpeqi   r10, r9, 0x52
-    bne   r10, r0, case_insert_char
+	o: cmpeqi r10, r9, 0x52
+    bne r10, r0, case_insert_char
 
 	# LeftBracket
     movi r14, '['
 	beq r11, r0, p
 	movui r14, '{'
-	p: cmpeqi   r10, r9, 0x54
-    bne   r10, r0, case_insert_char
+	p: cmpeqi r10, r9, 0x54
+    bne r10, r0, case_insert_char
 
 	# RightBracket
     movi r14, ']'
 	beq r11, r0, q
 	movui r14, '}'
-	q: cmpeqi   r10, r9, 0x5b
-    bne   r10, r0, case_insert_char
+	q: cmpeqi r10, r9, 0x5b
+    bne r10, r0, case_insert_char
 
     # Minus
     movi r14, '-'
 	beq r11, r0, r
 	movui r14, '_'
-	r: cmpeqi   r10, r9, 0x4e
-    bne   r10, r0, case_insert_char
+	r: cmpeqi r10, r9, 0x4e
+    bne r10, r0, case_insert_char
 
     # Equals
     movi r14, '='
 	beq r11, r0, s
 	movui r14, '+'
-	s: cmpeqi   r10, r9, 0x55
-    bne   r10, r0, case_insert_char
+	s: cmpeqi r10, r9, 0x55
+    bne r10, r0, case_insert_char
 
 	br end
     
