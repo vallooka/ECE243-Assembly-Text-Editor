@@ -1289,24 +1289,29 @@ interrupt_handler:
 	ldw r10, 0(r10)
 	beq r10, r0, call_delete_char
 	call delete_selection
-	br end
+	br noisemaker
+    br end
 
 	call_delete_char:
     call delete_char
+    br noisemaker
 	br end
     
     caseEnter:
 	movui r4, '\n'
 
     call insert_char
+    br noisemaker
 	br end
     
 	caseUpArrow:
     call move_cursor_up
+    br noisemaker
 	br end
 
 	caseDownArrow:
     call move_cursor_down
+    br noisemaker
 	br end
 
 	caseLeftArrow:
@@ -1343,7 +1348,8 @@ interrupt_handler:
 	
 	call_move_cursor_left:
 	call move_cursor_left
-	br end
+	br noisemaker
+    br end
 
 	caseRightArrow:
 	# if shift held
@@ -1379,7 +1385,8 @@ interrupt_handler:
 	
 	call_move_cursor_right:
 	call move_cursor_right
-	br end
+	br noisemaker
+    br end
 
     end:
     
